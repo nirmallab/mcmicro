@@ -89,6 +89,7 @@ static def cleanParams(pars, mspecs) {
     // Protected keywords
     def keywords = ['in', 'contPfx', 'cont-pfx', 'roadie', 'workflow',
         'options', 'modules', 'params', 'publish_dir_mode', 'trace_report_suffix',
+        'mgb_report_dir', 'mgb-report-dir',
         'mgb_singularity_cache', 'mgb-singularity-cache',
         'mgb_gpu_queue', 'mgb-gpu-queue',
         'mgb_gpu_gres', 'mgb-gpu-gres',
