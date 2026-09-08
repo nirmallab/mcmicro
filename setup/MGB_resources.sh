@@ -3,6 +3,7 @@ set -euo pipefail
 
 GPU_PARTITION="${MGB_GPU_PARTITION:-gpu-l40s}"
 GPU_GRES="${MGB_GPU_GRES:-gpu:nvidia_l40s:1}"
+MGB_WORK_ROOT="${MGB_WORK_ROOT:-$HOME/scratch}"
 
 echo "== Host =="
 hostname
@@ -48,8 +49,14 @@ sacctmgr show user "$USER" withassoc format=User,DefaultAccount,Account,Partitio
 
 echo
 echo "== Filesystems =="
-df -h "$HOME" /data /scratch /n/scratch 2>/dev/null || true
+ls -ld "$HOME" "$HOME/scratch" "$MGB_WORK_ROOT" 2>/dev/null || true
+df -h "$HOME" "$HOME/scratch" /data /scratch /n/scratch 2>/dev/null || true
+findmnt -T "$HOME/scratch" -no TARGET,OPTIONS 2>/dev/null || true
 printf 'TMPDIR=%s\n' "${TMPDIR:-}"
+printf 'APPTAINER_TMPDIR=%s\n' "${APPTAINER_TMPDIR:-}"
+printf 'APPTAINER_CACHEDIR=%s\n' "${APPTAINER_CACHEDIR:-}"
+printf 'SINGULARITY_TMPDIR=%s\n' "${SINGULARITY_TMPDIR:-}"
+printf 'SINGULARITY_CACHEDIR=%s\n' "${SINGULARITY_CACHEDIR:-}"
 
 if [[ "${1:-}" == "--test-gpu" ]]; then
   echo
