@@ -43,6 +43,7 @@ mkdir -p $HOME/scratch/mcmicro-work
 mkdir -p $HOME/scratch/apptainer-tmp
 mkdir -p $HOME/scratch/apptainer-cache
 mkdir -p $HOME/.mcmicro/singularity
+mkdir -p "$DATASETDIR/pipeline_info"
 
 export APPTAINER_TMPDIR=$HOME/scratch/apptainer-tmp
 export APPTAINER_CACHEDIR=$HOME/scratch/apptainer-cache
@@ -92,6 +93,7 @@ mkdir -p $HOME/scratch/mcmicro-work
 mkdir -p $HOME/scratch/apptainer-tmp
 mkdir -p $HOME/scratch/apptainer-cache
 mkdir -p $HOME/.mcmicro/singularity
+mkdir -p "$DATASETDIR/pipeline_info"
 
 export APPTAINER_TMPDIR=$HOME/scratch/apptainer-tmp
 export APPTAINER_CACHEDIR=$HOME/scratch/apptainer-cache
