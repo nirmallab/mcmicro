@@ -113,10 +113,12 @@ nextflow run labsyspharm/mcmicro \
 
 ## Dynamic resource requests
 
-The `MGB` profile retries Slurm jobs that exit with statuses commonly associated with resource exhaustion and increases memory/time on retry. It also supports OME-TIFF image-size-aware memory estimates if an equivalent gigapixel helper script is supplied:
+The `MGB` profile retries Slurm jobs that exit with statuses commonly associated with resource exhaustion and increases memory/time on retry. It also uses the bundled `setup/MGB_ome_tiff_gpx.py` helper script for OME-TIFF image-size-aware memory estimates.
+
+To use a different gigapixel helper script, override the default:
 
 ```
 --mgb_ome_tiff_gpx_script /path/to/ome-tiff-gpx.py
 ```
 
-Without this optional helper, the profile uses conservative fallback memory values.
+If the helper cannot read an image, the profile uses conservative fallback memory values.
