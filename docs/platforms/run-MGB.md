@@ -36,11 +36,18 @@ which singularity || which apptainer
 singularity --version || apptainer --version
 ```
 
-1. Use scratch storage for the Nextflow work directory.
+1. Use scratch storage for the Nextflow work directory and Apptainer/Singularity temporary build cache. On Nucleus, `$HOME/scratch` resolves to the user's scratch directory, for example `/scratch/a/$USER`.
 
 ```
-mkdir -p /scratch/$USER/mcmicro-work
+mkdir -p $HOME/scratch/mcmicro-work
+mkdir -p $HOME/scratch/apptainer-tmp
+mkdir -p $HOME/scratch/apptainer-cache
 mkdir -p $HOME/.mcmicro/singularity
+
+export APPTAINER_TMPDIR=$HOME/scratch/apptainer-tmp
+export APPTAINER_CACHEDIR=$HOME/scratch/apptainer-cache
+export SINGULARITY_TMPDIR=$HOME/scratch/apptainer-tmp
+export SINGULARITY_CACHEDIR=$HOME/scratch/apptainer-cache
 ```
 
 ## Checking available resources
@@ -81,13 +88,20 @@ module purge
 module load Nextflow/25.10.0
 module load singularity/latest
 
-mkdir -p /scratch/$USER/mcmicro-work
+mkdir -p $HOME/scratch/mcmicro-work
+mkdir -p $HOME/scratch/apptainer-tmp
+mkdir -p $HOME/scratch/apptainer-cache
 mkdir -p $HOME/.mcmicro/singularity
+
+export APPTAINER_TMPDIR=$HOME/scratch/apptainer-tmp
+export APPTAINER_CACHEDIR=$HOME/scratch/apptainer-cache
+export SINGULARITY_TMPDIR=$HOME/scratch/apptainer-tmp
+export SINGULARITY_CACHEDIR=$HOME/scratch/apptainer-cache
 
 nextflow run labsyspharm/mcmicro \
   --in "$DATASETDIR" \
   -profile MGB \
-  -w /scratch/$USER/mcmicro-work \
+  -w $HOME/scratch/mcmicro-work \
   -resume
 ```
 
@@ -107,7 +121,7 @@ nextflow run labsyspharm/mcmicro \
   -profile MGB \
   --mgb_gpu_queue gpu-l40s \
   --mgb_gpu_gres gpu:nvidia_l40s:1 \
-  -w /scratch/$USER/mcmicro-work \
+  -w $HOME/scratch/mcmicro-work \
   -resume
 ```
 
