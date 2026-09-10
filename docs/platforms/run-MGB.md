@@ -9,6 +9,8 @@ parent: Platforms
 
 MGB ERIS Nucleus is a Slurm-based high-performance computing environment at Mass General Brigham. The `MGB` profile configures MCMICRO to use Slurm, Singularity/Apptainer, and the Nucleus GPU partition observed on `erishpc-login-001`.
 
+The profile copies completed outputs from scratch work directories back into the project directory. Copy mode is used because Nucleus scratch and group data directories may live on different filesystems, where hard links are not reliable.
+
 ## Setting up for MCMICRO on Nucleus
 
 1. Load Nextflow and Singularity/Apptainer.
