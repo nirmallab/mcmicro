@@ -7,76 +7,11 @@ parent: Platforms
 
 # Running MCMICRO on MGB ERIS Nucleus
 
-MGB ERIS Nucleus is a Slurm-based high-performance computing environment at Mass General Brigham. The `MGB` profile configures MCMICRO to use Slurm, Singularity/Apptainer, and the Nucleus GPU partition observed on `erishpc-login-001`.
+The `MGB` profile configures MCMICRO for the Mass General Brigham ERIS Nucleus Slurm cluster. It sets the Slurm executor, Singularity/Apptainer settings, Nucleus GPU partition, GPU resource request, output publishing mode, and adaptive resource requests.
 
-The profile copies completed outputs from scratch work directories back into the project directory. Copy mode is used because Nucleus scratch and group data directories may live on different filesystems, where hard links are not reliable.
+Submit MCMICRO through Slurm instead of running a full pipeline directly on a login node. The first run may download and build Singularity images, so the launcher job requests 32 GB of memory. After the required containers are cached, this can usually be reduced.
 
-## Setting up for MCMICRO on Nucleus
-
-1. Load Nextflow and Singularity/Apptainer.
-
-```
-module purge
-module load Nextflow/25.10.0
-module load singularity/latest
-```
-
-If `singularity` is not available after loading `singularity/latest`, load Apptainer directly:
-
-```
-module load Apptainer/1.4.2-1.el9
-```
-
-1. Confirm the runtime commands are available.
-
-```
-which java
-java -version
-which nextflow
-nextflow -version
-which singularity || which apptainer
-singularity --version || apptainer --version
-```
-
-1. Use scratch storage for the Nextflow work directory and Apptainer/Singularity temporary build cache. On Nucleus, `$HOME/scratch` resolves to the user's scratch directory, for example `/scratch/a/$USER`.
-
-```
-mkdir -p $HOME/scratch/mcmicro-work
-mkdir -p $HOME/scratch/apptainer-tmp
-mkdir -p $HOME/scratch/apptainer-cache
-mkdir -p $HOME/.mcmicro/singularity
-mkdir -p "$DATASETDIR/pipeline_info"
-
-export APPTAINER_TMPDIR=$HOME/scratch/apptainer-tmp
-export APPTAINER_CACHEDIR=$HOME/scratch/apptainer-cache
-export SINGULARITY_TMPDIR=$HOME/scratch/apptainer-tmp
-export SINGULARITY_CACHEDIR=$HOME/scratch/apptainer-cache
-```
-
-## Checking available resources
-
-The Nucleus partition and GPU names should be verified with Slurm before running a large job:
-
-```
-bash setup/MGB_resources.sh
-```
-
-To test GPU allocation:
-
-```
-bash setup/MGB_resources.sh --test-gpu
-```
-
-The observed GPU resource on `erishpc-login-001` is:
-
-```
-partition: gpu-l40s
-gres:      gpu:nvidia_l40s:1
-```
-
-## Running MCMICRO
-
-Submit the Nextflow launcher through Slurm instead of running a full pipeline directly on the login node. A minimal submission script is:
+Create a submission script such as `mcmicro_template.sh`:
 
 ```
 #!/bin/bash
@@ -84,59 +19,53 @@ Submit the Nextflow launcher through Slurm instead of running a full pipeline di
 #SBATCH -J mcmicro
 #SBATCH -o mcmicro-%j.log
 #SBATCH -t 12:00:00
-#SBATCH --mem=4G
+#SBATCH --mem=32G
 #SBATCH -c 2
+#SBATCH --mail-type=END
+
+in="${1:-$(pwd)}"
+
+if [ ! -e "$in/markers.csv" ]; then
+  echo "ERROR: $0: Input directory '$in' does not look like an MCMICRO project directory; markers.csv was not found." >&2
+  exit 1
+fi
 
 module purge
 module load Nextflow/25.10.0
 module load singularity/latest
 
-mkdir -p $HOME/scratch/mcmicro-work
-mkdir -p $HOME/scratch/apptainer-tmp
-mkdir -p $HOME/scratch/apptainer-cache
-mkdir -p $HOME/.mcmicro/singularity
-mkdir -p "$DATASETDIR/pipeline_info"
-
+export NXF_JVM_ARGS='-Xms256m -Xmx2g -XX:ActiveProcessorCount=2'
+export NXF_WORK="$HOME/scratch/mcmicro-work"
 export APPTAINER_TMPDIR=$HOME/scratch/apptainer-tmp
 export APPTAINER_CACHEDIR=$HOME/scratch/apptainer-cache
 export SINGULARITY_TMPDIR=$HOME/scratch/apptainer-tmp
 export SINGULARITY_CACHEDIR=$HOME/scratch/apptainer-cache
 
+mkdir -p "$NXF_WORK" "$APPTAINER_TMPDIR" "$APPTAINER_CACHEDIR" "$HOME/.mcmicro/singularity" "$in/pipeline_info"
+
+echo "Launching MCMICRO in $in"
+cd "$in"
+
 nextflow run labsyspharm/mcmicro \
-  --in "$DATASETDIR" \
   -profile MGB \
-  -w $HOME/scratch/mcmicro-work \
+  --in . \
+  -w "$NXF_WORK" \
   -resume
 ```
 
-Submit with:
+Submit the job from an MCMICRO project directory:
 
 ```
-sbatch submit_mcmicro_mgb.sh
+sbatch mcmicro_template.sh .
 ```
 
-## Customizing GPU requests
+The `MGB` profile uses `$HOME/scratch` for working files and `$HOME/.mcmicro/singularity` for cached container images. The Apptainer/Singularity temporary directories are also placed under `$HOME/scratch` because `/tmp` may not be suitable for container builds on Nucleus.
 
-If the GPU partition or GRES name changes, override the defaults:
-
-```
-nextflow run labsyspharm/mcmicro \
-  --in "$DATASETDIR" \
-  -profile MGB \
-  --mgb_gpu_queue gpu-l40s \
-  --mgb_gpu_gres gpu:nvidia_l40s:1 \
-  -w $HOME/scratch/mcmicro-work \
-  -resume
-```
-
-## Dynamic resource requests
-
-The `MGB` profile retries Slurm jobs that exit with statuses commonly associated with resource exhaustion and increases memory/time on retry. It also uses the bundled `setup/MGB_ome_tiff_gpx.py` helper script for OME-TIFF image-size-aware memory estimates.
-
-To use a different gigapixel helper script, override the default:
+By default, the profile uses:
 
 ```
---mgb_ome_tiff_gpx_script /path/to/ome-tiff-gpx.py
+GPU partition: gpu-l40s
+GPU GRES:      gpu:nvidia_l40s:1
 ```
 
-If the helper cannot read an image, the profile uses conservative fallback memory values.
+The profile also includes retry-based resource scaling and a bundled TIFF/OME-TIFF size estimator for image-size-aware memory requests. Users normally do not need to call the estimator or pull containers manually.
