@@ -11,7 +11,7 @@ The `MGB` profile configures MCMICRO for the Mass General Brigham ERIS Nucleus S
 
 Submit MCMICRO through Slurm instead of running a full pipeline directly on a login node.
 
-> **First-time run:** The first run may download and build Singularity images, so the launcher job requests 32 GB of memory. After the required containers are cached, this can usually be reduced.
+> **First-time run:** The first run may download and build Singularity images. If container builds fail because of memory, temporarily increase the launcher request from `--mem=2G` to `--mem=32G`; after the required containers are cached, `2G` is usually sufficient.
 
 Create a submission script such as `mcmicro_template.sh`:
 
@@ -21,7 +21,7 @@ Create a submission script such as `mcmicro_template.sh`:
 #SBATCH -J mcmicro
 #SBATCH -o mcmicro-%j.log
 #SBATCH -t 12:00:00
-#SBATCH --mem=32G
+#SBATCH --mem=2G
 #SBATCH -c 2
 #SBATCH --mail-type=END
 
