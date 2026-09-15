@@ -9,6 +9,8 @@ parent: Platforms
 
 The `MGB` profile configures MCMICRO for the Mass General Brigham ERIS Nucleus Slurm cluster. It sets the Slurm executor, Singularity/Apptainer settings, Nucleus GPU partition, GPU resource request, output publishing mode, and adaptive resource requests.
 
+This profile was prepared by the [Nirmal Lab](https://nirmallab.com/).
+
 Submit MCMICRO through Slurm instead of running a full pipeline directly on a login node.
 
 > **First-time run:** The first run may download and build Singularity images. If container builds fail because of memory, temporarily increase the launcher request from `--mem=2G` to `--mem=32G`; after the required containers are cached, `2G` is usually sufficient.
